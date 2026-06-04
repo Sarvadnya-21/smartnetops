@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dashboard | Smart NetOps Hub</title>
+<style>
+  :root{
+    --glass-bg: rgba(255,255,255,0.14);
+    --glass-bg-2: rgba(255,255,255,0.22);
+    --accent-blue: #0091ff;
+  }
+  body{
+    margin:0;
+    font-family: "Poppins", system-ui, sans-serif;
+    background: linear-gradient(135deg, #81868b, #7c7c86);
+    color:#fff;
+    min-height:100vh;
+    overflow:auto;
+  }
+  .bg-circle{ position:fixed; border-radius:50%; filter:blur(80px); opacity:0.55; z-index:0; }
+  .c1{ width:380px; height:380px; background:#4a90e2; top:8%; left:12%; animation:float 7s infinite ease-in-out; }
+  .c2{ width:450px; height:450px; background:#9b59b6; bottom:10%; right:10%; animation:float 7s infinite ease-in-out; animation-delay:2s; }
+  @keyframes float{ 0%{transform:translateY(0);} 50%{transform:translateY(-35px);} 100%{transform:translateY(0);} }
+
+  .page { position:relative; z-index:2; max-width:1400px; margin:36px auto; padding:0 18px; display:flex; gap:28px; align-items:flex-start; }
+  .sidebar {
+    width:300px;
+    height: calc(100vh - 72px);
+    background: var(--glass-bg);
+    backdrop-filter: blur(14px);
+    border-radius:14px;
+    padding:18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    overflow-y:auto;
+    position:sticky;
+    top:18px;
+  }
+
+  .dropdown-btn {
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    background: rgba(255,255,255,0.18);
+    border:none;
+    color:#fff;
+    text-align:left;
+    cursor:pointer;
+    margin-bottom:8px;
+    font-size:15px;
+  }
+  .dropdown-btn:hover { transform:translateX(4px); background: rgba(255,255,255,0.26); }
+
+  .dropdown-panel {
+    display:none;
+    margin-top:8px;
+    max-height:220px;
+    overflow-y:auto;
+    padding-left:6px;
+  }
+
+  .dropdown-item {
+    background: rgba(255,255,255,0.08);
+    padding:10px 12px;
+    margin:6px 0;
+    border-radius:8px;
+    cursor:pointer;
+    color:#fff;
+  }
+  .dropdown-item:hover { background: rgba(255,255,255,0.2); }
+
+  /* Back button */
+  .back-btn {
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 15px;
+    color: white;
+    display: inline-block;
+  }
+
+  .back-btn:hover {
+    background: rgba(255,255,255,0.3);
+  }
+
+  .search-group { margin-bottom:6px; }
+  .search-group input{
+    width:100%;
+    padding:6px 8px;
+    border-radius:6px;
+    border:none;
+    outline:none;
+    background: rgba(255,255,255,0.08);
+    color:#fff;
+    font-size:13px;
+    margin-bottom:6px;
+  }
+
+  .content { flex:1; display:flex; flex-direction:column; gap:18px; }
+  .top-row { display:flex; align-items:center; justify-content:space-between; gap:18px; }
+  .title { font-size:28px; font-weight:700; margin:0; }
+  .subtitle { opacity:0.85; margin-top:6px; font-size:14px; }
+
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:16px; }
+  .card { background: var(--glass-bg); backdrop-filter: blur(14px); border-radius:12px; padding:18px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+  .card h3 { margin:0 0 8px 0; font-size:14px; font-weight:700; }
+  .card .big { font-size:26px; font-weight:800; margin-top:6px; }
+  .two-col { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  .actions { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:12px; }
+  .action-btn { background: rgba(255,255,255,0.06); border-radius:10px; padding:12px; text-align:center; cursor:pointer; }
+  .action-btn:hover { background: rgba(255,255,255,0.12); transform:translateY(-3px); }
+  .muted { color: rgba(255,255,255,0.8); font-size:13px; }
+  .activity-list p { margin:8px 0; color: rgba(255,255,255,0.9); }
+
+  @media (max-width: 980px){ .page{ flex-direction:column; padding:18px;} .sidebar{ width:100%; height:auto; position:relative; top:0; } }
+</style>
+</head>
+<body>
+
+<div class="bg-circle c1"></div>
+<div class="bg-circle c2"></div>
+
+<div class="page">
+
+  <aside class="sidebar" aria-label="Sidebar">
+    <a href="landing page.html" class="back-btn">⬅ Back to Home</a>
+    <button id="globalBtn" class="dropdown-btn" onclick="selectMode('global')">🌎 Global</button>
+    <button id="siteBtn" class="dropdown-btn" onclick="selectMode('site')">📍 Site Specific</button>
+
+    <div id="siteSpecificPanel" style="display:none; margin-top:12px;">
+
+      <button id="regionBtn" class="dropdown-btn" onclick="togglePanel('regionPanel')">🌐 Region</button>
+      <div id="regionPanel" class="dropdown-panel">
+        <div class="search-group"><input type="text" id="regionSearch" placeholder="Search Region" oninput="filterDropdown('region')"></div>
+      </div>
+
+      <button id="countryBtn" class="dropdown-btn" onclick="togglePanel('countryPanel')">📡 Country</button>
+      <div id="countryPanel" class="dropdown-panel">
+        <div class="search-group"><input type="text" id="countrySearch" placeholder="Search Country" oninput="filterDropdown('country')"></div>
+      </div>
+
+      <button id="siteBtnSelect" class="dropdown-btn" onclick="togglePanel('sitePanel')">🛠 Site ID</button>
+      <div id="sitePanel" class="dropdown-panel">
+        <div class="search-group"><input type="text" id="siteSearch" placeholder="Search Site" oninput="filterDropdown('site')"></div>
+      </div>
+
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="top-row">
+      <div>
+        <h1 class="title">📊 Dashboard</h1>
+        <div class="subtitle">Comprehensive analytics and monitoring at a glance</div>
+      </div>
+    </div>
+
+    <section class="grid">
+      <div class="card"><h3>Total Servers</h3><div class="big">45</div><div class="muted">+3 from last month</div></div>
+      <div class="card"><h3>Uptime</h3><div class="big">99.9%</div><div class="muted">Last 30 days</div></div>
+      <div class="card"><h3>Active Users</h3><div class="big">127</div><div class="muted">+12% from last week</div></div>
+      <div class="card"><h3>Performance</h3><div class="big">Excellent</div><div class="muted">All metrics green</div></div>
+    </section>
+
+    <section class="two-col" style="margin-top:8px;">
+      <div class="card">
+        <h3>System Performance</h3>
+        <div class="muted">Real-time monitoring of system resources</div>
+        <div style="margin-top:12px;">
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;"><span>CPU Usage</span><span>45%</span></div>
+              <div style="background:rgba(255,255,255,0.08);height:8px;border-radius:999px;margin-top:6px;">
+                <div style="width:45%;height:8px;border-radius:999px;background:linear-gradient(90deg,#00c6ff,#007bff)"></div>
+              </div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;"><span>Memory</span><span>62%</span></div>
+              <div style="background:rgba(255,255,255,0.08);height:8px;border-radius:999px;margin-top:6px;">
+                <div style="width:62%;height:8px;border-radius:999px;background:linear-gradient(90deg,#7b61ff,#00d4ff)"></div>
+              </div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;"><span>Disk</span><span>38%</span></div>
+              <div style="background:rgba(255,255,255,0.08);height:8px;border-radius:999px;margin-top:6px;">
+                <div style="width:38%;height:8px;border-radius:999px;background:linear-gradient(90deg,#ff7b7b,#ff4d4f)"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;"><span>Network</span><span>71%</span></div>
+              <div style="background:rgba(255,255,255,0.08);height:8px;border-radius:999px;margin-top:6px;">
+                <div style="width:71%;height:8px;border-radius:999px;background:linear-gradient(90deg,#ffd24d,#ff8a00)"></div>
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="card">
+        <h3>Recent Activity</h3>
+        <div class="muted" style="margin-bottom:12px;">Latest system events and updates</div>
+        <div id="activityList" class="activity-list"></div>
+      </div>
+    </section>
+
+    <section style="margin-top:12px;">
+<!--      <div class="card">-->
+<!--        <h3>Quick Actions</h3>-->
+<!--        <div class="muted" style="margin-bottom:10px;">Common tasks</div>-->
+<!--        <div class="actions">-->
+<!--          <div class="action-btn">Add Server</div>-->
+<!--          <div class="action-btn">View Reports</div>-->
+<!--          <div class="action-btn">Run Diagnostics</div>-->
+<!--          <div class="action-btn">Manage Users</div>-->
+<!--        </div>-->
+<!--      </div>-->
+    </section>
+  </main>
+</div>
+
+<script>
+  // Global / Site Specific toggle
+  function selectMode(mode){
+    if(mode==='global'){
+      document.getElementById('siteSpecificPanel').style.display='none';
+      document.getElementById('globalBtn').style.background='rgba(255,255,255,0.26)';
+      document.getElementById('siteBtn').style.background='rgba(255,255,255,0.18)';
+    } else {
+      document.getElementById('siteSpecificPanel').style.display='block';
+      document.getElementById('siteBtn').style.background='rgba(255,255,255,0.26)';
+      document.getElementById('globalBtn').style.background='rgba(255,255,255,0.18)';
+    }
+  }
+
+  // API endpoints
+  const COUNTRY_SITES_API = "http://localhost:8080/proxy1";
+  const SITE_INFO_API = "/api/site-info";
+
+  const regionData = {
+  APAC: {
+    "China": ["CHN-BJS-DC-001"],
+    "Japan": ["JPN-TYO-DC-002"],
+    "Korea, Republic of": [],
+    "Taiwan": ["TWN-TPE-DC-006"],
+    "Malaysia": ["MYS-KUL-DC-008"],
+    "Singapore": ["SGP-SGP-DC-009"],
+    "Thailand": ["THA-BKK-DC-010"],
+    "Vietnam": ["VNM-HAN-DC-012"],
+    "Brunei Darussalam": ["BRN-BWN-DC-016"],
+
+    "India": ["IND-MUM-DC-018"],
+    "Australia": ["AUS-SYD-DC-026"],
+    "Guam": [],
+    "Hong Kong": [],
+    "Macau": [],
+    "New Zealand": []
+  },
+
+  EMEA: {
+    "United Kingdom": ["London-45", "Manchester-12"],
+    "Germany": ["Berlin-7", "Munich-10"],
+    "Italy": ["Rome-2", "Milan-6"],
+    "Czech Republic": [],
+    "Spain": ["ESP-MAD-DC-001"],
+    "South Africa": ["ZAF-JHB-BR-014"],
+    "Saudi Arabia": ["KSA-RYD-DC-004"],
+    "UAE": ["UAE-DXB-POP-005"],
+
+    "Austria": ["AUT-VIE-DC-001"],
+    "Belgium": ["BEL-BRU-DC-002"],
+    "Netherlands": ["NLD-AMS-DC-003"],
+    "Poland": ["POL-WAW-DC-004"],
+    "Sweden": ["SWE-STO-DC-005"],
+    "Turkey": ["TUR-IST-DC-015"],
+    "Bulgaria": [],
+    "Switzerland": [],
+    "Denmark": [],
+    "Finland": [],
+    "Greece": [],
+    "France": [],
+    "Croatia": [],
+    "Hungary": [],
+    "Ireland": [],
+    "Kuwait": [],
+    "Lithuania": [],
+    "Luxembourg": [],
+    "Latvia": [],
+    "Norway": [],
+    "Portugal": [],
+    "Romania": [],
+    "Serbia": [],
+    "Russian Federation": [],
+    "Slovenia": [],
+    "Slovakia": [],
+    "Ukraine": []
+  },
+
+  AMER: {
+    "Canada": ["CAN-TOR-DC-001"],
+    "United States": ["USA-NYC-DC-002"],
+    "United States of America": ["USA-NV-LAS-001"],
+    "Mexico": ["MEX-MEX-DC-003"],
+
+    "Argentina": ["ARG-BUE-DC-024"],
+    "Brazil": ["BRA-GRU-DC-026"]
+  }
+};
+
+  const regionPanel = document.getElementById('regionPanel');
+  const countryPanel = document.getElementById('countryPanel');
+  const sitePanel = document.getElementById('sitePanel');
+
+  function populateRegions(){
+    Object.keys(regionData).forEach(r=>{
+      const el = document.createElement('div');
+      el.className='dropdown-item';
+      el.textContent = r;
+      el.onclick = ()=> selectRegion(r);
+      regionPanel.appendChild(el);
+    });
+  }
+
+  function loadCountries(region){
+    countryPanel.innerHTML='<div class="search-group"><input type="text" id="countrySearch" placeholder="Search Country" oninput="filterDropdown(\'country\')"></div>';
+    sitePanel.innerHTML='<div class="search-group"><input type="text" id="siteSearch" placeholder="Search Site" oninput="filterDropdown(\'site\')"></div>';
+    Object.keys(regionData[region]||{}).forEach(c=>{
+      const el = document.createElement('div');
+      el.className='dropdown-item';
+      el.textContent = c;
+      el.onclick = ()=> selectCountry(region,c);
+      countryPanel.appendChild(el);
+    });
+  }
+
+  function loadSites(region,country){
+    sitePanel.innerHTML='<div class="search-group"><input type="text" id="siteSearch" placeholder="Search Site" oninput="filterDropdown(\'site\')"></div>';
+    (regionData[region][country]||[]).forEach(s=>{
+      const el = document.createElement('div');
+      el.className='dropdown-item';
+      el.textContent = s;
+      el.onclick = ()=> selectSite(s);
+      sitePanel.appendChild(el);
+    });
+  }
+
+  function togglePanel(panelId){
+    const p = document.getElementById(panelId);
+    p.style.display = p.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function selectRegion(region){
+    document.getElementById("regionBtn").textContent = "🌐 Region: " + region;
+    document.getElementById("regionPanel").style.display = "none";
+    document.getElementById("countryBtn").textContent = "📡 Country";
+    document.getElementById("siteBtnSelect").textContent = "🛠 Site ID";
+    
+    // Save to localStorage
+    localStorage.setItem("selectedRegion", region);
+    localStorage.removeItem("selectedCountry");
+    localStorage.removeItem("selectedSite");
+    
+    loadCountries(region);
+  }
+
+  /* ---------------------------
+     fetchSitesForCountry (API Integration)
+     --------------------------- */
+  async function fetchSitesForCountry(region, country) {
+    const sitePanel = document.getElementById("sitePanel");
+    if (sitePanel) {
+      sitePanel.innerHTML = '<div class="search-group"><input type="text" id="siteSearch" placeholder="Search Site" oninput="filterDropdown(\'site\')"></div><div class="dropdown-item">Loading sites for ' + country + '...</div>';
+    }
+
+    try {
+      console.log(`[fetchSitesForCountry] POST -> ${COUNTRY_SITES_API}`, { region, country });
+
+      const res = await fetch(COUNTRY_SITES_API, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ region, country })
+      });
+
+      console.log("[fetchSitesForCountry] status:", res.status, res.statusText);
+      const text = await res.text();
+      console.log("[fetchSitesForCountry] RAW:", text);
+
+      let data = null;
+      try { data = JSON.parse(text); } catch (e) { console.warn("JSON parse failed:", e); }
+
+      let sites = [];
+
+      // auto-detect valid formats
+      if (Array.isArray(data)) sites = data;
+      else if (Array.isArray(data?.sites)) sites = data.sites;
+      else if (Array.isArray(data?.data)) sites = data.data;
+      else if (Array.isArray(data?.result)) sites = data.result;
+      else if (data && typeof data === "object") {
+        const vals = Object.values(data).flat();
+        if (Array.isArray(vals)) sites = vals;
+      }
+
+      // normalize each site
+      const normalized = sites.map(s => {
+        if (typeof s === "string") return s;
+        if (typeof s === "object") return s.site || s.siteId || s.id || s.name || s.label || JSON.stringify(s);
+        return String(s);
+      });
+
+      if (!normalized.length) throw new Error("API returned no usable site IDs");
+
+      // Update regionData with fetched sites
+      regionData[region][country] = normalized;
+      loadSites(region, country);
+
+      // show dropdown automatically
+      if (sitePanel) {
+        sitePanel.style.display = "block";
+      }
+
+    } catch (err) {
+      console.error("[fetchSitesForCountry] ERROR:", err);
+      if (sitePanel) {
+        sitePanel.innerHTML = '<div class="search-group"><input type="text" id="siteSearch" placeholder="Search Site" oninput="filterDropdown(\'site\')"></div><div class="dropdown-item" style="color:#ffb3b3;">Error loading sites: ' + err.message + '</div>';
+      }
+
+      // Fallback to local data if available
+      if (regionData[region]?.[country]?.length) {
+        console.log("Fallback to local data");
+        loadSites(region, country);
+        if (sitePanel) {
+          sitePanel.style.display = "block";
+        }
+      }
+    }
+  }
+
+  /* ---------------------------
+     fetchSiteInfo (API Integration)
+     --------------------------- */
+  async function fetchSiteInfo(region, country, site) {
+    if (!region || !country || !site) return;
+    try {
+      const res = await fetch(SITE_INFO_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ region, country, site })
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+      localStorage.setItem("selectedSiteInfo", JSON.stringify(data));
+    } catch (err) { 
+      console.error("Site info fetch failed", err); 
+    }
+  }
+
+  async function selectCountry(region,country){
+    document.getElementById("countryBtn").textContent = "📡 Country: " + country;
+    document.getElementById("countryPanel").style.display = "none";
+    document.getElementById("siteBtnSelect").textContent = "🛠 Site ID";
+    
+    // Save to localStorage
+    localStorage.setItem("selectedCountry", country);
+    localStorage.removeItem("selectedSite");
+    
+    // Fetch sites from API (with fallback to local data)
+    await fetchSitesForCountry(region, country);
+  }
+
+  function selectSite(site){
+    document.getElementById("siteBtnSelect").textContent = "🛠 Site: " + site;
+    document.getElementById("sitePanel").style.display = "none";
+    
+    // Get selected region and country from button text or localStorage
+    const regionBtn = document.getElementById("regionBtn");
+    const countryBtn = document.getElementById("countryBtn");
+    let region = regionBtn.textContent.replace("🌐 Region: ", "").replace("🌐 Region", "").trim();
+    let country = countryBtn.textContent.replace("📡 Country: ", "").replace("📡 Country", "").trim();
+    
+    // Fallback to localStorage if button text doesn't have values
+    if (!region || region === "") {
+      region = localStorage.getItem("selectedRegion");
+    }
+    if (!country || country === "") {
+      country = localStorage.getItem("selectedCountry");
+    }
+    
+    // Save to localStorage
+    localStorage.setItem("selectedSite", site);
+    if (region) {
+      localStorage.setItem("selectedRegion", region);
+    }
+    if (country) {
+      localStorage.setItem("selectedCountry", country);
+    }
+    
+    // Fetch site info if we have all three values
+    if (region && country && site) {
+      fetchSiteInfo(region, country, site);
+    }
+  }
+
+  function filterDropdown(kind){
+    let input, filter, panel, items;
+    if(kind==='region'){
+      input = document.getElementById('regionSearch'); panel = regionPanel;
+    } else if(kind==='country'){
+      input = document.getElementById('countrySearch'); panel = countryPanel;
+    } else {
+      input = document.getElementById('siteSearch'); panel = sitePanel;
+    }
+    filter = input.value.toLowerCase();
+    items = Array.from(panel.getElementsByClassName('dropdown-item'));
+    items.forEach(it => it.style.display = it.textContent.toLowerCase().includes(filter) ? '' : 'none');
+  }
+
+  const activityEvents = [
+    {time:'2 min ago', text:'Server backup completed successfully'},
+    {time:'15 min ago', text:'New user registered: john.doe@example.com'},
+    {time:'1 hour ago', text:'System update deployed to production'},
+    {time:'2 hours ago', text:'Database optimization completed'},
+    {time:'3 hours ago', text:'Security scan passed all checks'}
+  ];
+  const actBox = document.getElementById('activityList');
+  activityEvents.forEach(a=>{
+    const p = document.createElement('p');
+    p.innerHTML = `• ${a.text} <span style="display:block;color:rgba(255,255,255,0.6);font-size:12px;margin-top:4px;">${a.time}</span>`;
+    actBox.appendChild(p);
+  });
+
+  populateRegions();
+</script>
+</body>
+</html>

@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart NetOps Hub</title>
+<script src="activity-tracker.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    font-family: "Poppins", system-ui, sans-serif;
+    background: linear-gradient(135deg, #81868b, #7c7c86);
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(clamp(40px, 6vw, 80px));
+    opacity: 0.55;
+    animation: float 7s infinite ease-in-out;
+    z-index: 0;
+  }
+  .c1 {
+    width: clamp(180px, 35vw, 380px);
+    height: clamp(180px, 35vw, 380px);
+    background: #4a90e2;
+    top: 8%;
+    left: 12%;
+  }
+  .c2 {
+    width: clamp(220px, 40vw, 450px);
+    height: clamp(220px, 40vw, 450px);
+    background: #9b59b6;
+    bottom: 10%;
+    right: 10%;
+    animation-delay: 2s;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-35px); }
+    100% { transform: translateY(0); }
+  }
+
+  .main-container {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding-top: 30px;
+    margin-bottom: 20px;
+  }
+
+  .layout {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1300px;
+    margin: 20px auto;
+    padding: 0 25px;
+    gap: 30px;
+    z-index: 2;
+    position: relative;
+  }
+
+  .sidebar {
+    width: clamp(240px, 30%, 260px);
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(14px);
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    max-height: 78vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .dropdown {
+    margin-bottom: 18px;
+  }
+
+  .dropdown-btn {
+    width: 100%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: clamp(10px, 2.5vw, 12px) 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: clamp(14px, 2vw, 15px);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .dropdown-btn:hover {
+    background: rgba(255,255,255,0.33);
+    transform: translateX(3px);
+  }
+
+  .search-box {
+    width: 100%;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+
+  .dropdown-content {
+    display: none;
+    margin-top: 10px;
+    padding-left: 10px;
+  }
+
+  .dropdown-content div {
+    background: rgba(255,255,255,0.1);
+    padding: 10px 14px;
+    margin: 6px 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .dropdown-content div:hover {
+    background: rgba(255,255,255,0.25);
+  }
+
+  .grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(250px, 35vw, 310px), 1fr));
+    gap: 25px;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(14px);
+    border-radius: 14px;
+    padding: clamp(18px, 3vw, 25px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    text-align: center;
+    transition: 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.35);
+  }
+
+  .icon-box {
+    width: clamp(50px, 12vw, 60px);
+    height: clamp(50px, 12vw, 60px);
+    border-radius: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: clamp(26px, 4vw, 32px);
+    margin: 0 auto 15px;
+    color: white;
+  }
+
+  .blue { background: #0091ff; }
+  .purple { background: #bf24ff; }
+  .red { background: #ff4d4f; }
+  .green { background: #00c16a; }
+
+  .title {
+    font-size: clamp(16px, 2.6vw, 20px);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .desc {
+    font-size: clamp(13px, 2.2vw, 15px);
+    opacity: 0.9;
+    margin-bottom: 20px;
+  }
+
+  .card button {
+    width: 70%;
+    padding: clamp(10px, 2.5vw, 12px);
+    border-radius: 10px;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    cursor: pointer;
+    color: #fff;
+    font-size: clamp(14px, 2.5vw, 15px);
+    transition: 0.25s;
+  }
+
+  .card button:hover {
+    background: rgba(255,255,255,0.35);
+    transform: translateY(-3px);
+  }
+
+  .lock-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    z-index: 9998;
+    display: none;
+    pointer-events: none;
+  }
+
+  .lock-popup {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0.98);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    padding: 22px 26px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: none;
+    max-width: 90%;
+    width: 420px;
+    text-align: center;
+    animation: popupIn 220ms ease forwards;
+    pointer-events: auto;
+  }
+
+  .lock-popup h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+  }
+
+  .lock-popup p {
+    margin: 0;
+    opacity: 0.95;
+    font-size: 14px;
+  }
+
+  .lock-popup .emoji {
+    font-size: 28px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+
+  @keyframes popupIn {
+    from { transform: translate(-50%, -40%) scale(0.98); opacity: 0; }
+    to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  }
+
+  @media (max-width: 850px) {
+    .layout {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+      max-height: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .main-container h1 {
+      font-size: 24px;
+    }
+
+    .grid {
+      grid-template-columns: 1fr;
+    }
+
+    .lock-popup {
+      width: 92%;
+      padding: 18px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="bg-circle c1"></div>
+<div class="bg-circle c2"></div>
+
+<div class="main-container">
+  <h1>Smart NetOps Hub</h1>
+  <div class="subtext">Select a module to get started from below modules</div>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- REGION -->
+    <div class="dropdown">
+      <button class="dropdown-btn" onclick="toggleDropdown('region')">🌐 Region</button>
+      <div class="dropdown-content" id="region"></div>
+    </div>
+
+    <!-- COUNTRY -->
+    <div class="dropdown">
+      <button class="dropdown-btn" onclick="toggleDropdown('country')">📡 Country</button>
+      <div class="search-box" id="country-search">
+        <input type="text" placeholder="Search Country..." oninput="filterList('country')">
+      </div>
+      <div class="dropdown-content" id="country"></div>
+    </div>
+
+    <!-- SITE -->
+    <div class="dropdown">
+      <button class="dropdown-btn" onclick="toggleDropdown('site')">🛠 Site ID</button>
+      <div class="search-box" id="site-search">
+        <input type="text" placeholder="Search Site..." oninput="filterList('site')">
+      </div>
+      <div class="dropdown-content" id="site"></div>
+    </div>
+
+  </div>
+    <!-- MAIN CONTENT GRID -->
+  <div class="grid">
+
+    <!-- ChatOps -->
+    <div class="card">
+      <div class="icon-box blue">💬</div>
+      <div class="title">ChatOps</div>
+      <div class="desc">Manage and automate operations <br>through conversational interfaces</div>
+      <button onclick="openCard('chatops')">Open ChatOps</button>
+    </div>
+
+
+    <!-- Net ChatOps -->
+    <div class="card">
+      <div class="icon-box purple">🧩</div>
+      <div class="title">Net ChatOps</div>
+      <div class="desc">Network operations powered by <br>intelligent chat automation</div>
+      <button onclick="openCard('netchatops')">Open Net ChatOps</button>
+    </div>
+
+    <!-- NetAutomation Flow -->
+    <div class="card">
+      <div class="icon-box red">🔗</div>
+      <div class="title">NetAutomation Flow</div>
+      <div class="desc">Streamline network automation with <br>visual workflow management</div>
+      <button onclick="openCard('netautomationflow')">Open NetAutomation Flow</button>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="card">
+      <div class="icon-box green">📊</div>
+      <div class="title">Dashboard</div>
+      <div class="desc">Comprehensive analytics <br>& monitoring at a glance</div>
+      <button onclick="openCard('dashboard')">Open Dashboard</button>
+    </div>
+
+    <div class="card">
+      <div class="icon-box sky blue">🕸️</div>
+      <div class="title">Network Conectivity Diagram</div>
+      <div class="desc">Use this to get network diagram <br>for selected Site Id</div>
+      <button onclick="openCard('Network Diagram')">Network Conectivity Diagram</button>
+    </div>
+
+    <div class="card">
+      <div class="icon-box blue">🔥</div>
+      <div class="title">Firewall</div>
+      <div class="desc">Configure and monitor firewall rules <br>for your network</div>
+      <button onclick="openCard('firewall')">Firewall</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP + OVERLAY -->
+<div id="lock-overlay" class="lock-overlay"></div>
+
+<div id="lock-popup" class="lock-popup">
+  <div class="emoji">⚠️</div>
+  <h3>Please complete selections</h3>
+  <p>Choose a Region → Country → Site before accessing modules.</p>
+
+  <!-- NEW OK BUTTON -->
+  <button onclick="closePopup()"
+          style="margin-top:15px; padding:8px 16px;
+                 border-radius:8px; border:none;
+                 background:rgba(255,255,255,0.25);
+                 color:white; cursor:pointer;">
+    OK
+  </button>
+</div>
+
+<script>
+/* =================== REGION → COUNTRY → SITE DATA =================== */
+const regionData = {
+  APAC: {
+    "China": ["CHN-BJS-DC-001"],
+    "Japan": ["JPN-TYO-DC-002"],
+    "Korea, Republic of": [],
+    "Taiwan": ["TWN-TPE-DC-006"],
+    "Malaysia": ["MYS-KUL-DC-008"],
+    "Singapore": ["SGP-SGP-DC-009"],
+    "Thailand": ["THA-BKK-DC-010"],
+    "Vietnam": ["VNM-HAN-DC-012"],
+    "Brunei Darussalam": ["BRN-BWN-DC-016"],
+
+    "India": ["IND-MUM-DC-018"],
+    "Australia": ["AUS-SYD-DC-026"],
+    "Guam": [],
+    "Hong Kong": [],
+    "Macau": [],
+    "New Zealand": []
+  },
+
+  EMEA: {
+    "United Kingdom": ["London-45", "Manchester-12"],
+    "Germany": ["Berlin-7", "Munich-10"],
+    "Italy": ["Rome-2", "Milan-6"],
+    "Czech Republic": [],
+    "Spain": ["ESP-MAD-DC-001"],
+    "South Africa": ["ZAF-JHB-BR-014"],
+    "Saudi Arabia": ["KSA-RYD-DC-004"],
+    "UAE": ["UAE-DXB-POP-005"],
+
+    "Austria": ["AUT-VIE-DC-001"],
+    "Belgium": ["BEL-BRU-DC-002"],
+    "Netherlands": ["NLD-AMS-DC-003"],
+    "Poland": ["POL-WAW-DC-004"],
+    "Sweden": ["SWE-STO-DC-005"],
+    "Turkey": ["TUR-IST-DC-015"],
+    "Bulgaria": [],
+    "Switzerland": [],
+    "Denmark": [],
+    "Finland": [],
+    "Greece": [],
+    "France": [],
+    "Croatia": [],
+    "Hungary": [],
+    "Ireland": [],
+    "Kuwait": [],
+    "Lithuania": [],
+    "Luxembourg": [],
+    "Latvia": [],
+    "Norway": [],
+    "Portugal": [],
+    "Romania": [],
+    "Serbia": [],
+    "Russian Federation": [],
+    "Slovenia": [],
+    "Slovakia": [],
+    "Ukraine": []
+  },
+
+  AMER: {
+    "Canada": ["CAN-TOR-DC-001"],
+    "United States": ["USA-NYC-DC-002"],
+    "United States of America": ["USA-NV-LAS-001"],
+    "Mexico": ["MEX-MEX-DC-003"],
+
+    "Argentina": ["ARG-BUE-DC-024"],
+    "Brazil": ["BRA-GRU-DC-026"]
+  }
+};
+const COUNTRY_SITES_API = "http://161.145.120.131:8080/proxy1";
+const SITE_INFO_API = "/api/site-info";
+
+let selectedRegion = null;
+let selectedCountry = null;
+let selectedSite = null;
+let lockTimer = null;
+
+/* ---------------------------
+   fetchSitesForCountry (UPDATED)
+   --------------------------- */
+async function fetchSitesForCountry(region, country) {
+  const siteBox = document.getElementById("site");
+  if (siteBox) siteBox.innerHTML = `<div>Loading sites for ${country}...</div>`;
+
+  try {
+    console.log(`[fetchSitesForCountry] POST -> ${COUNTRY_SITES_API}`, { region, country });
+
+    const res = await fetch(COUNTRY_SITES_API, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ region, country })
+    });
+
+    console.log("[fetchSitesForCountry] status:", res.status, res.statusText);
+    const text = await res.text();
+    console.log("[fetchSitesForCountry] RAW:", text);
+
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { console.warn("JSON parse failed:", e); }
+
+    let sites = [];
+
+    // auto-detect valid formats
+    if (Array.isArray(data)) sites = data;
+    else if (Array.isArray(data?.sites)) sites = data.sites;
+    else if (Array.isArray(data?.data)) sites = data.data;
+    else if (Array.isArray(data?.result)) sites = data.result;
+    else if (data && typeof data === "object") {
+      const vals = Object.values(data).flat();
+      if (Array.isArray(vals)) sites = vals;
+    }
+
+    // normalize each site
+    const normalized = sites.map(s => {
+      if (typeof s === "string") return s;
+      if (typeof s === "object") return s.site || s.siteId || s.id || s.name || s.label || JSON.stringify(s);
+      return String(s);
+    });
+
+    if (!normalized.length) throw new Error("API returned no usable site IDs");
+
+    regionData[region][country] = normalized;
+    loadSites(region, country);
+
+    // show dropdown automatically
+    document.getElementById("site").style.display = "block";
+    document.getElementById("site-search").style.display = "block";
+
+  } catch (err) {
+    console.error("[fetchSitesForCountry] ERROR:", err);
+    siteBox.innerHTML = `<div style="color:#ffb3b3;">Error loading sites: ${err.message}</div>`;
+
+    if (regionData[region]?.[country]?.length) {
+      console.log("Fallback to local data");
+      loadSites(region, country);
+      document.getElementById("site").style.display = "block";
+      document.getElementById("site-search").style.display = "block";
+    }
+  }
+}
+
+/* ---------------------------
+   selectCountry (UPDATED)
+   --------------------------- */
+async function selectCountry(region, country) {
+  selectedCountry = country;
+  selectedSite = null;
+
+  document.querySelector("button[onclick=\"toggleDropdown('country')\"]").textContent = "📡 " + country;
+  document.querySelector("button[onclick=\"toggleDropdown('site')\"]").textContent = "🛠 Site ID";
+
+  if (window.ActivityTracker) {
+    window.ActivityTracker.trackCountrySelection(country, region);
+  }
+
+  // CLOSE the country dropdown after selecting
+  document.getElementById("country").style.display = "none";
+  document.getElementById("country-search").style.display = "none";
+
+
+  document.getElementById("site").innerHTML = `<div>Loading sites...</div>`;
+
+  // fetch sites + auto-open dropdown
+  await fetchSitesForCountry(region, country);
+
+  document.getElementById("site").style.display = "block";
+  document.getElementById("site-search").style.display = "block";
+}
+
+/* ---------------------------
+   Remaining original functions (unchanged)
+   --------------------------- */
+async function fetchSiteInfo(region, country, site) {
+  if (!region || !country || !site) return;
+  try {
+    const res = await fetch(SITE_INFO_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ region, country, site })
+    });
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    const data = await res.json();
+    localStorage.setItem("selectedSiteInfo", JSON.stringify(data));
+  } catch (err) { console.error("Site info fetch failed", err); }
+}
+
+function toggleDropdown(id) {
+  const box = document.getElementById(id);
+  const search = document.getElementById(id + "-search");
+  if (box.style.display === "block") {
+    box.style.display = "none"; if (search) search.style.display = "none";
+  } else {
+    closeAllDropdowns();
+    box.style.display = "block"; if (search) search.style.display = "block";
+  }
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll(".dropdown-content").forEach(b => b.style.display = "none");
+  document.querySelectorAll(".search-box").forEach(s => s.style.display = "none");
+}
+
+function loadRegions() {
+  const box = document.getElementById("region");
+  box.innerHTML = "";
+  Object.keys(regionData).forEach(r => {
+    const d = document.createElement("div");
+    d.textContent = r;
+    d.onclick = () => selectRegion(r);
+    box.appendChild(d);
+  });
+}
+
+function selectRegion(region) {
+  selectedRegion = region;
+  selectedCountry = null;
+  selectedSite = null;
+
+  document.querySelector("button[onclick=\"toggleDropdown('region')\"]").textContent = "🌐 " + region;
+  document.querySelector("button[onclick=\"toggleDropdown('country')\"]").textContent = "📡 Country";
+  document.querySelector("button[onclick=\"toggleDropdown('site')\"]").textContent = "🛠 Site ID";
+
+  if (window.ActivityTracker) {
+    window.ActivityTracker.trackRegionSelection(region);
+  }
+
+  loadCountries(region);
+  closeAllDropdowns();
+}
+
+function loadCountries(region) {
+  const box = document.getElementById("country");
+  box.innerHTML = "";
+  Object.keys(regionData[region]).forEach(c => {
+    const d = document.createElement("div");
+    d.textContent = c;
+    d.onclick = () => selectCountry(region, c);
+    box.appendChild(d);
+  });
+  document.getElementById("site").innerHTML = "";
+}
+
+function loadSites(region, country) {
+  const box = document.getElementById("site");
+  box.innerHTML = "";
+  const list = regionData[region]?.[country];
+  if (!list || !list.length) {
+    box.innerHTML = `<div style="color:#ffb3b3;">No sites for ${country}</div>`;
+    return;
+  }
+  list.forEach(site => {
+    const d = document.createElement("div");
+    d.textContent = site;
+    d.onclick = () => selectSite(site);
+    box.appendChild(d);
+  });
+}
+
+function selectSite(site) {
+  selectedSite = site;
+  document.querySelector("button[onclick=\"toggleDropdown('site')\"]").textContent = "🛠 " + site;
+  fetchSiteInfo(selectedRegion, selectedCountry, site);
+  localStorage.setItem("selectedSite", site);
+
+  if (window.ActivityTracker) {
+    window.ActivityTracker.trackSiteSelection(site, selectedRegion, selectedCountry);
+  }
+
+  closeAllDropdowns();
+}
+
+function filterList(id) {
+  const term = document.querySelector(`#${id}-search input`).value.toLowerCase();
+  document.querySelectorAll(`#${id} div`).forEach(i => {
+    i.style.display = i.textContent.toLowerCase().includes(term) ? "block" : "none";
+  });
+}
+
+function showLockPopup() {
+  document.getElementById("lock-popup").style.display = "block";
+  document.getElementById("lock-overlay").style.display = "block";
+  lockTimer = setTimeout(closePopup, 5000);
+}
+
+function closePopup() {
+  document.getElementById("lock-popup").style.display = "none";
+  document.getElementById("lock-overlay").style.display = "none";
+  if (lockTimer) clearTimeout(lockTimer);
+}
+
+function openCard(pageKey) {
+
+// Dashboard opens freely (NO restrictions)
+if (pageKey === "dashboard") {
+  if (window.ActivityTracker) {
+    window.ActivityTracker.trackModuleAccess("Dashboard");
+  }
+  window.location.href = "dashboard.html";
+  return;
+}
+
+// For other pages: selections required
+if (!selectedRegion || !selectedCountry || !selectedSite) {
+  showLockPopup();
+  //Button disabled
+  return;
+}
+
+// Save selections
+localStorage.setItem("selectedRegion", selectedRegion);
+localStorage.setItem("selectedCountry", selectedCountry);
+localStorage.setItem("selectedSite", selectedSite);
+
+const mapping = {
+  chatops: "chatops.html",
+  netchatops: "netchatops.html",
+  netautomationflow: "Netautomation Flow.html",
+  dashboard: "dashboard.html",
+  network_diagram: "Network Diagram.html"
+};
+
+const moduleNames = {
+  chatops: "ChatOps",
+  netchatops: "Net ChatOps",
+  netautomationflow: "NetAutomation Flow",
+  dashboard: "Dashboard",
+  network_diagram: "Network Diagram"
+};
+
+if (window.ActivityTracker) {
+  window.ActivityTracker.trackModuleAccess(moduleNames[pageKey] || pageKey);
+}
+
+const url = mapping[pageKey] || `${pageKey}.html`;
+window.location.href = url;
+}
+
+loadRegions();
+</script>
+</body>
+</html>

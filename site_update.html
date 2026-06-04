@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Site Update</title>
+    <script src="activity-tracker.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Poppins", system-ui, sans-serif;
+            background: linear-gradient(135deg, #81868b, #7c7c86);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(clamp(40px, 6vw, 80px));
+            opacity: 0.55;
+            animation: float 7s infinite ease-in-out;
+            z-index: 0;
+        }
+
+        .c1 {
+            width: clamp(180px, 35vw, 380px);
+            height: clamp(180px, 35vw, 380px);
+            background: #4a90e2;
+            top: 8%;
+            left: 12%;
+        }
+
+        .c2 {
+            width: clamp(220px, 40vw, 450px);
+            height: clamp(220px, 40vw, 450px);
+            background: #9b59b6;
+            bottom: 10%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-35px);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding-top: 30px;
+            margin-bottom: 20px;
+        }
+
+        .layout {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 1300px;
+            margin: 20px auto;
+            padding: 0 25px;
+            gap: 30px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .sidebar {
+            width: clamp(240px, 30%, 260px);
+            background: rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(14px);
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            max-height: 78vh;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .dropdown {
+            margin-bottom: 18px;
+        }
+
+        .dropdown-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: clamp(10px, 2.5vw, 12px) 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: clamp(14px, 2vw, 15px);
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .dropdown-btn:hover {
+            background: rgba(255, 255, 255, 0.33);
+            transform: translateX(3px);
+        }
+
+        .search-box {
+            width: 100%;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .dropdown-content {
+            display: none;
+            margin-top: 10px;
+            padding-left: 10px;
+        }
+
+        .dropdown-content div {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            margin: 6px 0;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .dropdown-content div:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Sidebar toggle for missing site */
+        .missing-site-box {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: none;
+            /* Shown when country is selected */
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .create-site-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            background: #4a90e2;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .create-site-btn:hover {
+            background: #357ABD;
+        }
+
+        /* MAIN CONTENT STYLES */
+        .main-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(14px);
+            border-radius: 14px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            min-height: 500px;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .content-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.25s;
+            color: #fff;
+        }
+
+        .btn.primary {
+            background: #0091ff;
+        }
+
+        .btn.primary:hover:not(:disabled) {
+            background: #007acc;
+            transform: translateY(-2px);
+        }
+
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn.secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Form Styles */
+        .site-display {
+            margin-bottom: 20px;
+            font-size: 18px;
+            display: none;
+        }
+
+        .site-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInForm 0.4s forwards ease-out;
+        }
+
+        @keyframes fadeInForm {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .form-group input {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .form-group input.new-site-input {
+            background: rgba(74, 144, 226, 0.15);
+            border-color: #4a90e2;
+        }
+
+        .form-group input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 40px;
+            font-size: 24px;
+            color: #4ade80;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 850px) {
+            .layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-circle c1"></div>
+    <div class="bg-circle c2"></div>
+
+    <div class="main-container">
+        <h1>Site Update</h1>
+    </div>
+
+    <div class="layout">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+
+            <!-- REGION -->
+            <div class="dropdown">
+                <button class="dropdown-btn" onclick="toggleDropdown('region')">🌐 Region</button>
+                <div class="dropdown-content" id="region"></div>
+            </div>
+
+            <!-- COUNTRY -->
+            <div class="dropdown">
+                <button class="dropdown-btn" onclick="toggleDropdown('country')">📡 Country</button>
+                <div class="search-box" id="country-search">
+                    <input type="text" placeholder="Search Country..." oninput="filterList('country')">
+                </div>
+                <div class="dropdown-content" id="country"></div>
+            </div>
+
+            <!-- SITE -->
+            <div class="dropdown">
+                <button class="dropdown-btn" onclick="toggleDropdown('site')">🛠 Site ID</button>
+                <div class="search-box" id="site-search">
+                    <input type="text" placeholder="Search Site..." oninput="filterList('site')">
+                </div>
+                <div class="dropdown-content" id="site"></div>
+            </div>
+
+            <!-- Missing Site Logic (MOVED HERE) -->
+            <div class="missing-site-box" id="missing-site-box">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" id="site-not-found-chk" onchange="toggleCreateMode()">
+                    Site ID not found?
+                </label>
+                <button class="create-site-btn" id="create-site-btn" onclick="handleCreateNew()">Create New Site
+                    ID</button>
+            </div>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h2 id="content-title">Update your site</h2>
+                <div class="action-buttons">
+                    <button id="update-btn" class="btn primary" onclick="handleUpdate()" disabled>Update</button>
+                </div>
+            </div>
+
+            <div id="content-area">
+                <div id="site-id-display" class="site-display">
+                    Selected Site: <span style="font-weight: bold; color: #606060;"></span>
+                </div>
+
+                <div id="form-container"></div>
+
+                <div id="success-message" class="success-message">
+                    Thank you for your updates!!
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const regionData = {
+            APAC: {
+                "China": [],
+                "Japan": [],
+                "Korea": [],
+                "Taiwan": [],
+                "Malaysia": [],
+                "Singapore": [],
+                "Thailand": [],
+                "Vietnam": [],
+                "Brunei Darussalam": [],
+                "India": [],
+                "Australia": [],
+                "Guam": [],
+                "Hong Kong": [],
+                "Macau": [],
+                "New Zealand": []
+            },
+            EMEA: {
+                "United Kingdom": [],
+                "Germany": [],
+                "Italy": [],
+                "Czech Republic": [],
+                "Spain": [],
+                "South Africa": [],
+                "Saudi Arabia": [],
+                "UAE": [],
+                "Austria": [],
+                "Belgium": [],
+                "Netherlands": [],
+                "Poland": [],
+                "Sweden": [],
+                "Turkey": [],
+                "Bulgaria": [],
+                "Switzerland": [],
+                "Denmark": [],
+                "Finland": [],
+                "Greece": [],
+                "France": [],
+                "Croatia": [],
+                "Hungary": [],
+                "Ireland": [],
+                "Kuwait": [],
+                "Lithuania": [],
+                "Luxembourg": [],
+                "Latvia": [],
+                "Norway": [],
+                "Portugal": [],
+                "Romania": [],
+                "Serbia": [],
+                "Russian Federation": [],
+                "Slovenia": [],
+                "Slovakia": [],
+                "Ukraine": []
+            },
+            AMER: {
+                "Canada": [],
+                "United States": [],
+                "United States of America": [],
+                "Mexico": [],
+                "Argentina": [],
+                "Brazil": []
+            }
+        };
+
+        const COUNTRY_SITES_API = "http://161.145.120.131:8080/proxy1";
+
+        let selectedRegion = null;
+        let selectedCountry = null;
+        let selectedSite = null;
+        let isCreatingNew = false;
+        let allSitesRaw = []; // Store raw site objects from API
+        let selectedSiteData = null; // Store data for the currently selected site
+
+        // Mapping from form field display names to API data keys
+        const fieldMapping = {
+            "Site ID": "U_SITE_ID",
+            "Business Unit": "U_BUSINESS_UNIT",
+            "Building, Floor": "U_BUILDING_FLOOR",
+            "Street Address": "U_STREET_ADDRESS",
+            "City": "U_CITY",
+            "State": "U_STATE",
+            "Country": "U_COUNTRY",
+            "Zipcode": "U_PINCODE"
+        };
+
+        // Form fields configuration
+        const formFields = [
+            "Site ID", "Business Unit", "Building, Floor", "Street Address",
+            "City", "State", "Country", "Zipcode", "Primary Contact Name",
+            "Secondary Contact Name", "Primary Contact", "Secondary Contact",
+            "Primary Contact E-mail", "Secondary Contact E-mail", "Building Type"
+        ];
+
+        /* Site Fetch Logic */
+        async function fetchSitesForCountry(region, country) {
+            const siteBox = document.getElementById("site");
+            siteBox.innerHTML = `<div>Loading sites for ${country}...</div>`;
+            // Missing box is external now, we ensure it's hidden during load or just stays?
+            document.getElementById("missing-site-box").style.display = "none";
+
+            try {
+                const res = await fetch(COUNTRY_SITES_API, {
+                    method: "POST",
+                    mode: "cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ region, country })
+                });
+
+                const text = await res.text();
+                let data = null;
+                try { data = JSON.parse(text); } catch (e) { }
+
+                let sites = [];
+                if (Array.isArray(data)) sites = data;
+                else if (Array.isArray(data?.sites)) sites = data.sites;
+                else if (Array.isArray(data?.data)) sites = data.data;
+                else if (Array.isArray(data?.result)) sites = data.result;
+                else if (data && typeof data === "object") {
+                    const vals = Object.values(data).flat();
+                    if (Array.isArray(vals)) sites = vals;
+                }
+
+                // Store raw data for mapping later
+                allSitesRaw = sites;
+
+                const normalized = sites.map(s => {
+                    if (typeof s === "string") return s;
+                    if (typeof s === "object") {
+                        const parts = [
+                            s["U_SITE_ID"],
+                            s["U_STREET_ADDRESS"],
+                            s["U_CITY"],
+                            s["U_STATE"],
+                            s["U_COUNTRY"],
+                            s["U_PINCODE"]
+                        ].filter(val => val && String(val).trim() !== "");
+                        return parts.length > 0 ? parts.join(" | ") : JSON.stringify(s);
+                    }
+                    return String(s);
+                });
+
+                // Merge with local regionData if any
+                const existing = regionData[region][country] || [];
+                const merged = Array.from(new Set([...existing, ...normalized]));
+                regionData[region][country] = merged;
+
+                refreshSiteList(region, country);
+
+                // Show UI
+                document.getElementById("site").style.display = "block";
+                document.getElementById("site-search").style.display = "block";
+                document.getElementById("missing-site-box").style.display = "block";
+
+            } catch (err) {
+                console.error("Fetch error:", err);
+                if (regionData[region]?.[country]?.length) {
+                    refreshSiteList(region, country);
+                    document.getElementById("site").style.display = "block";
+                    document.getElementById("site-search").style.display = "block";
+                    document.getElementById("missing-site-box").style.display = "block";
+                } else {
+                    siteBox.innerHTML = `<div style="color:#ffb3b3;">Error loading sites.</div>`;
+                    document.getElementById("site").style.display = "block";
+                    document.getElementById("missing-site-box").style.display = "block";
+                }
+            }
+        }
+
+        /* UI Interactions */
+        function toggleDropdown(id) {
+            const box = document.getElementById(id);
+            const search = document.getElementById(id + "-search");
+
+            // Close others
+            ['region', 'country', 'site'].forEach(key => {
+                if (key !== id) {
+                    document.getElementById(key).style.display = "none";
+                    const s = document.getElementById(key + "-search");
+                    if (s) s.style.display = "none";
+                }
+            });
+
+            if (box.style.display === "block") {
+                box.style.display = "none";
+                if (search) search.style.display = "none";
+            } else {
+                box.style.display = "block";
+                if (search) search.style.display = "block";
+            }
+        }
+
+        function loadRegions() {
+            const box = document.getElementById("region");
+            box.innerHTML = "";
+            Object.keys(regionData).forEach(r => {
+                const d = document.createElement("div");
+                d.textContent = r;
+                d.onclick = () => selectRegion(r);
+                box.appendChild(d);
+            });
+        }
+
+        function selectRegion(region) {
+            selectedRegion = region;
+            selectedCountry = null;
+            selectedSite = null;
+
+            resetUI();
+
+            document.querySelector("button[onclick=\"toggleDropdown('region')\"]").textContent = "🌐 " + region;
+            document.querySelector("button[onclick=\"toggleDropdown('country')\"]").textContent = "📡 Country";
+            document.querySelector("button[onclick=\"toggleDropdown('site')\"]").textContent = "🛠 Site ID";
+
+            loadCountries(region);
+            document.getElementById("region").style.display = "none";
+        }
+
+        function loadCountries(region) {
+            const box = document.getElementById("country");
+            box.innerHTML = "";
+            Object.keys(regionData[region]).forEach(c => {
+                const d = document.createElement("div");
+                d.textContent = c;
+                d.onclick = () => selectCountry(region, c);
+                box.appendChild(d);
+            });
+            document.getElementById("site-search").style.display = "none";
+            document.getElementById("missing-site-box").style.display = "none";
+        }
+
+        function selectCountry(region, country) {
+            selectedCountry = country;
+            selectedSite = null;
+
+            resetUI();
+
+            document.querySelector("button[onclick=\"toggleDropdown('country')\"]").textContent = "📡 " + country;
+            document.querySelector("button[onclick=\"toggleDropdown('site')\"]").textContent = "🛠 Site ID";
+
+            document.getElementById("country").style.display = "none";
+            document.getElementById("country-search").style.display = "none";
+
+            // Reset checkbox
+            document.getElementById("site-not-found-chk").checked = false;
+            document.getElementById("create-site-btn").style.display = "none";
+
+            fetchSitesForCountry(region, country);
+        }
+
+        function refreshSiteList(region, country) {
+            const box = document.getElementById("site");
+            box.innerHTML = "";
+
+            const list = regionData[region]?.[country] || [];
+
+            if (list.length === 0) {
+                box.innerHTML = "<div style='opacity:0.6'>No sites found</div>";
+            }
+
+            list.forEach(site => {
+                const d = document.createElement("div");
+                d.textContent = site;
+                d.onclick = () => selectSite(site);
+                box.appendChild(d);
+            });
+        }
+
+        function selectSite(siteDisplayString) {
+            selectedSite = siteDisplayString;
+            isCreatingNew = false;
+            document.querySelector("button[onclick=\"toggleDropdown('site')\"]").textContent = "🛠 " + siteDisplayString;
+
+            document.getElementById("site").style.display = "none";
+            document.getElementById("site-search").style.display = "none";
+
+            // Find raw data for this site display string
+            // Our display string is "ID | Street | City | State | Country | PIN"
+            // We need to match it back to the original object
+            selectedSiteData = allSitesRaw.find(s => {
+                if (typeof s === "string") return s === siteDisplayString;
+                const parts = [
+                    s["U_SITE_ID"],
+                    s["U_STREET_ADDRESS"],
+                    s["U_CITY"],
+                    s["U_STATE"],
+                    s["U_COUNTRY"],
+                    s["U_PINCODE"]
+                ].filter(val => val && String(val).trim() !== "");
+                const constructedString = parts.length > 0 ? parts.join(" | ") : JSON.stringify(s);
+                return constructedString === siteDisplayString;
+            });
+
+            // UI Display
+            const displayEl = document.getElementById("site-id-display");
+            displayEl.style.display = "block";
+            // Extract just the ID for display or show the whole thing? User wanted selected site ID.
+            const siteId = selectedSiteData?.["U_SITE_ID"] || siteDisplayString.split(" | ")[0];
+            displayEl.querySelector("span").textContent = siteId;
+
+            document.getElementById("content-title").textContent = "Update your site";
+
+            // Show form immediately
+            renderForm(false);
+        }
+
+        function filterList(id) {
+            const term = document.querySelector(`#${id}-search input`).value.toLowerCase();
+
+            if (id === 'site') {
+                const box = document.getElementById("site");
+                Array.from(box.children).forEach(child => {
+                    child.style.display = child.textContent.toLowerCase().includes(term) ? "block" : "none";
+                });
+            } else {
+                document.querySelectorAll(`#${id} div`).forEach(i => {
+                    i.style.display = i.textContent.toLowerCase().includes(term) ? "block" : "none";
+                });
+            }
+        }
+
+        /* Create New Site Logic */
+        function toggleCreateMode() {
+            const chk = document.getElementById("site-not-found-chk");
+            const btn = document.getElementById("create-site-btn");
+            btn.style.display = chk.checked ? "block" : "none";
+        }
+
+        function handleCreateNew() {
+            document.getElementById("site").style.display = "none";
+            document.getElementById("site-search").style.display = "none";
+
+            selectedSite = null;
+            isCreatingNew = true;
+
+            document.querySelector("button[onclick=\"toggleDropdown('site')\"]").textContent = "🛠 Creating New Site";
+            document.getElementById("site-id-display").style.display = "none";
+
+            document.getElementById("content-title").textContent = "Create New Site ID";
+
+            renderForm(true);
+        }
+
+        /* Form & Update Logic */
+        function resetUI() {
+            document.getElementById("update-btn").disabled = true;
+            document.getElementById("form-container").innerHTML = "";
+            document.getElementById("success-message").style.display = "none";
+            document.getElementById("site-id-display").style.display = "none";
+            document.getElementById("content-title").textContent = "Update your site";
+            isCreatingNew = false;
+        }
+
+        function renderForm(isNew) {
+            const container = document.getElementById("form-container");
+            container.innerHTML = "";
+
+            document.getElementById("success-message").style.display = "none";
+
+            const form = document.createElement("form");
+            form.className = "site-form";
+            form.onsubmit = (e) => e.preventDefault();
+
+
+
+            formFields.forEach(field => {
+                const group = document.createElement("div");
+                group.className = "form-group";
+
+                const label = document.createElement("label");
+                label.textContent = field;
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.className = "standard-input";
+                input.placeholder = `Enter ${field}`;
+
+                // Pre-fill if not creating new
+                if (!isNew && selectedSiteData) {
+                    const apiKey = fieldMapping[field];
+                    if (apiKey && selectedSiteData[apiKey]) {
+                        input.value = selectedSiteData[apiKey];
+                    }
+                }
+
+                input.oninput = checkFormValidity;
+
+                group.appendChild(label);
+                group.appendChild(input);
+                form.appendChild(group);
+            });
+
+            container.appendChild(form);
+            checkFormValidity(); // Initial check for pre-filled data
+        }
+
+        function checkFormValidity() {
+            const inputs = document.querySelectorAll(".site-form input");
+            let allFilled = true;
+            inputs.forEach(input => {
+                if (!input.value.trim()) allFilled = false;
+            });
+
+            document.getElementById("update-btn").disabled = !allFilled;
+        }
+
+        async function handleUpdate() {
+            const btn = document.getElementById("update-btn");
+            btn.textContent = isCreatingNew ? "Creating..." : "Updating...";
+            btn.disabled = true;
+
+            // Gather form data
+            const inputs = document.querySelectorAll('.site-form input');
+            const data = {};
+            inputs.forEach(input => {
+                const key = input.placeholder.replace('Enter ', '').replace(' (e.g., USA-NYC-DC-999)', '').trim();
+                data[key] = input.value.trim();
+            });
+            // Determine API endpoint
+            const apiUrl = isCreatingNew ? 'https://example.com/api/createSite' : 'https://example.com/api/updateSite';
+            try {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        region: selectedRegion,
+                        country: selectedCountry,
+                        siteId: isCreatingNew ? data['Site ID'] : selectedSite,
+                        details: data
+                    })
+                });
+                if (!res.ok) throw new Error('Network response was not ok');
+                const result = await res.json();
+
+                // On success, update UI and local data
+                if (isCreatingNew) {
+                    const newId = data['Site ID'];
+                    if (newId && selectedRegion && selectedCountry) {
+                        // Create a new raw object for this site
+                        const newSiteObj = { "U_SITE_ID": newId };
+                        Object.keys(fieldMapping).forEach(field => {
+                            const apiKey = fieldMapping[field];
+                            if (apiKey) newSiteObj[apiKey] = data[field];
+                        });
+
+                        allSitesRaw.push(newSiteObj);
+
+                        // Normalize and add to regionData
+                        const parts = [
+                            newSiteObj["U_SITE_ID"],
+                            newSiteObj["U_STREET_ADDRESS"],
+                            newSiteObj["U_CITY"],
+                            newSiteObj["U_STATE"],
+                            newSiteObj["U_COUNTRY"],
+                            newSiteObj["U_PINCODE"]
+                        ].filter(val => val && String(val).trim() !== "");
+                        const normalizedStr = parts.length > 0 ? parts.join(" | ") : newId;
+
+                        if (!regionData[selectedRegion][selectedCountry].includes(normalizedStr)) {
+                            regionData[selectedRegion][selectedCountry].push(normalizedStr);
+                            refreshSiteList(selectedRegion, selectedCountry);
+                        }
+
+                        selectedSite = normalizedStr;
+                        selectedSiteData = newSiteObj;
+                        document.querySelector("button[onclick=\"toggleDropdown('site')\"]").textContent = "🛠 " + normalizedStr;
+
+                        // Reset creation UI
+                        document.getElementById("site-not-found-chk").checked = false;
+                        document.getElementById("create-site-btn").style.display = "none";
+                    }
+                } else {
+                    // Update local selectedSiteData so UI stays consistent
+                    Object.keys(fieldMapping).forEach(field => {
+                        const apiKey = fieldMapping[field];
+                        if (apiKey && data[field]) {
+                            selectedSiteData[apiKey] = data[field];
+                        }
+                    });
+
+                    // Also update the display string in the sidebar list if ID/Address changed
+                    const oldDisplay = selectedSite;
+                    const parts = [
+                        selectedSiteData["U_SITE_ID"],
+                        selectedSiteData["U_STREET_ADDRESS"],
+                        selectedSiteData["U_CITY"],
+                        selectedSiteData["U_STATE"],
+                        selectedSiteData["U_COUNTRY"],
+                        selectedSiteData["U_PINCODE"]
+                    ].filter(val => val && String(val).trim() !== "");
+                    const newDisplayString = parts.length > 0 ? parts.join(" | ") : selectedSiteData["U_SITE_ID"];
+
+                    if (oldDisplay !== newDisplayString) {
+                        const list = regionData[selectedRegion][selectedCountry];
+                        const idx = list.indexOf(oldDisplay);
+                        if (idx !== -1) list[idx] = newDisplayString;
+                        selectedSite = newDisplayString;
+                        document.querySelector("button[onclick=\"toggleDropdown('site')\"]").textContent = "🛠 " + newDisplayString;
+                        refreshSiteList(selectedRegion, selectedCountry);
+                    }
+                }
+
+                document.getElementById("form-container").innerHTML = "";
+                document.getElementById("success-message").style.display = "block";
+            } catch (err) {
+                console.error('Error during site', isCreatingNew ? 'creation' : 'update', err);
+                alert('Failed to ' + (isCreatingNew ? 'create' : 'update') + ' site. Please try again.');
+            } finally {
+                btn.textContent = "Update";
+                btn.disabled = false;
+                if (window.ActivityTracker) {
+                    window.ActivityTracker.trackModuleAccess("Site Update - " + (selectedSite || "New Site"));
+                }
+            }
+        }
+
+        // Initial Load
+        loadRegions();
+
+    </script>
+</body>
+
+</html>
