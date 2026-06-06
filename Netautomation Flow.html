@@ -544,6 +544,7 @@
 
         const RUN_API_URL = "http://161.145.120.131:8080/proxy2";
         const CNS_API_URL = "http://161.145.120.131:8080/proxy5";
+        const PATH_DIVERSITY_API_URL = "http://161.145.120.131:8080/proxy6";  // Path Diversity API endpoint
         function getUsername() {
             return localStorage.getItem("username") || localStorage.getItem("currentUser") || localStorage.getItem("current_user") || "unknown";
         }
@@ -889,7 +890,7 @@
 
                 console.debug('sending', payload);
 
-                const apiUrl = idx === 5 ? CNS_API_URL : RUN_API_URL;
+                const apiUrl = idx === 5 ? CNS_API_URL : (idx === 6 ? PATH_DIVERSITY_API_URL : RUN_API_URL);
                 const res = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 updateProgress(idx, 70);
                 responseBox.textContent = "Receiving response...";
@@ -937,14 +938,21 @@
                 }
 
                 else {
-                    let content = buildUHostTable(normalized.response);
-                    if (idx === 6) {
-                        const routerInfo = selectedDevice && selectedDevice.hostname.toUpperCase().includes('SD')
-                            ? `<p style="margin-top:10px; font-weight:600;">Selected Router: ${escapeHtml(selectedDevice.hostname)} (${escapeHtml(selectedDevice.ip)})</p>`
-                            : `<p style="margin-top:10px; color:#ffb3b3; font-weight:600;">No selected router</p>`;
-                        content = routerInfo + content;
-                    }
-                    responseBox.innerHTML = content;
+                        let content = buildUHostTable(normalized.response);
+                        if (idx === 6) {
+                            const siteId = localStorage.getItem("selectedSite") || '-';
+                            const siteHtml = `<p style="margin-top:8px; font-weight:600;">Site ID: ${escapeHtml(siteId)}</p>`;
+                            const routerInfo = selectedDevice && selectedDevice.hostname.toUpperCase().includes('SD')
+                                ? `<p style="margin-top:6px; font-weight:600;">Selected Router: ${escapeHtml(selectedDevice.hostname)} (${escapeHtml(selectedDevice.ip)})</p>`
+                                : `<p style="margin-top:6px; color:#ffb3b3; font-weight:600;">No selected router</p>`;
+
+                            // Build Path Diversity table from API response
+                            const pdSource = normalized.response || normalized;
+                            const pdTable = buildPathDiversityTable(pdSource);
+
+                            content = siteHtml + routerInfo + pdTable;
+                        }
+                        responseBox.innerHTML = content;
                 }
                 updateLastRun(idx);
 
@@ -1083,6 +1091,49 @@
         </table>
     `;
 }
+
+            // Build a table specifically for Check Path Diversity results
+            function buildPathDiversityTable(data) {
+                if (!data) return `<p>No path diversity data received.</p>`;
+
+                // Normalize possible shapes into an array of entries
+                let list = [];
+                if (Array.isArray(data)) list = data;
+                else if (Array.isArray(data?.response)) list = data.response;
+                else if (Array.isArray(data?.data)) list = data.data;
+                else if (Array.isArray(data?.devList)) list = data.devList;
+                else if (data && typeof data === 'object') list = [data];
+
+                if (!list.length) return `<p>No entries found.</p>`;
+
+                const rows = list.map(item => {
+                    const circuit = safeField(item, ['U_CIRCUITID', 'circuitId', 'circuit']) || '-';
+                    const status = safeField(item, ['U_SERVICESTATUS', 'serviceStatus', 'status']) || '-';
+                    const isp = safeField(item, ['U_ISP_NAME', 'isp', 'provider', 'U_ISP']) || '-';
+
+                    return `
+                        <tr>
+                            <td>${escapeHtml(String(circuit))}</td>
+                            <td>${escapeHtml(String(status))}</td>
+                            <td>${escapeHtml(String(isp))}</td>
+                        </tr>`;
+                }).join('');
+
+                return `
+                    <table class="hosts-table">
+                        <thead>
+                            <tr>
+                                <th>Circuit ID</th>
+                                <th>Service Status</th>
+                                <th>ISP Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                `;
+            }
 
         function buildUsagePayload({ username, module, workflow }) {
             const toolName = "Smart NetOps";
